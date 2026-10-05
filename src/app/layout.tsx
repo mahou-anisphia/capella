@@ -5,8 +5,10 @@ import { Nunito, Quicksand } from "next/font/google";
 
 import { SiteHeader } from "~/components/layout/site-header";
 import { RegisterServiceWorker } from "~/components/pwa/register-service-worker";
+import { ThemeColorSync } from "~/components/theme/theme-color-sync";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
+import { THEME_BACKGROUND } from "~/lib/theme-colors";
 import { TRPCReactProvider } from "~/trpc/react";
 
 // Every page depends on "today" and live data, so never prerender at build time.
@@ -20,10 +22,11 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Capella", statusBarStyle: "default" },
 };
 
+// First paint follows the OS scheme; ThemeColorSync then switches to the in-app theme.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFF3F8" },
-    { media: "(prefers-color-scheme: dark)", color: "#1C2340" },
+    { media: "(prefers-color-scheme: light)", color: THEME_BACKGROUND.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_BACKGROUND.dark },
   ],
 };
 
@@ -49,6 +52,7 @@ export default function RootLayout({
     >
       <body className="min-h-dvh">
         <ThemeProvider>
+          <ThemeColorSync />
           <TRPCReactProvider>
             <SiteHeader />
             <main className="mx-auto w-full max-w-2xl px-4 pb-16">
