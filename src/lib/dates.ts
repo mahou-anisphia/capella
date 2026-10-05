@@ -3,6 +3,8 @@
  * arithmetic happens on whole day numbers and can't drift across DST or server timezones.
  */
 
+import { format } from "date-fns";
+
 export type ISODate = string;
 
 /** The day rolls over at midnight in this zone (Asia/Saigon is the legacy alias). */
@@ -98,27 +100,18 @@ export function isoToLocalDate(date: ISODate): Date {
   return new Date(y, m - 1, d);
 }
 
-const shortFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-});
-const longFormat = new Intl.DateTimeFormat("en-GB", {
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
+// Display formatting uses date-fns' bundled locale data rather than `Intl`: the runtime's ICU data
+// differs between Node and browsers (e.g. en-GB September is "Sept" in newer CLDR, "Sep" in
+// older), and any difference becomes a hydration mismatch on server-rendered labels.
 
 /** "5 Oct" */
 export function formatShort(date: ISODate): string {
-  return shortFormat.format(new Date(toDayNumber(date) * MS_PER_DAY));
+  return format(isoToLocalDate(date), "d MMM");
 }
 
 /** "Mon, 5 Oct 2026" */
 export function formatLong(date: ISODate): string {
-  return longFormat.format(new Date(toDayNumber(date) * MS_PER_DAY));
+  return format(isoToLocalDate(date), "EEE, d MMM yyyy");
 }
 
 /** "5 – 18 Oct" */

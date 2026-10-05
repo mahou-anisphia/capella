@@ -1,0 +1,25 @@
+# Runs the app only — PostgreSQL is external and reached through DATABASE_URL in .env.
+# Use ./setup.sh / ./teardown.sh rather than calling compose directly; setup.sh validates .env
+# and exports PORT so the published port matches the one the app listens on.
+name: capella
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: capella:latest
+    restart: unless-stopped
+    # Compose v2 parses this like dotenv: surrounding "..." / '...' are stripped, not passed
+    # through literally. `required: false` lets ./teardown.sh run even when .env is missing;
+    # ./setup.sh refuses to start without it.
+    env_file:
+      - path: .env
+        required: false
+    # These override anything in .env.
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: ${PORT:-3000}
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"

@@ -11,21 +11,35 @@ This is a non-mission-critical app, so keep things simple. It still needs a mini
 ## Commands
 
 ```bash
-pnpm dev            # next dev --turbo
-pnpm check          # next lint + tsc --noEmit — run before considering work done
+pnpm dev            # dotenv -- next dev --turbo (honours PORT from .env)
+pnpm check          # next lint + tsc --noEmit
 pnpm lint:fix
 pnpm format:write   # prettier (with tailwind class sorting)
-pnpm build
+pnpm build          # next build (output: "standalone")
 pnpm test           # vitest run (src/**/*.test.ts)
+./setup.sh          # Docker: validate .env, tear down, rebuild image, start, wait for healthy
+./teardown.sh       # Docker: remove container + network (--purge also removes the image)
 ```
+
+**Definition of done for a feature:** `pnpm check` **and** `pnpm build` must both pass before you call it finished. Always run the build: it catches errors `tsc` misses (prerendering, route/page collection, server/client boundary mistakes). If the build fails with `Cannot find module for page`, it's a stale `.next` from `next dev`; delete `.next` and rebuild.
 
 Pure logic worth testing (date math, stats) gets a colocated `*.test.ts` run by Vitest.
 
 Env vars are validated at build/dev time by `src/env.js` (`@t3-oss/env-nextjs`). A new variable has to be added in three places: the zod schema, `runtimeEnv` in `src/env.js`, and `.env.example`. Import `env` from `~/env` and never read `process.env` directly. Set `SKIP_ENV_VALIDATION=1` to bypass validation.
 
+`PORT` (default 3000) is read from `.env`. Next.js ignores a `PORT` set in `.env` because the server binds before `.env` is loaded, so `dev` and `start` are wrapped with `dotenv-cli`.
+
+## Docker
+
+The app runs as a single container from `Dockerfile` (multi-stage: `deps` → `build` → `runner` with the standalone output) via `docker-compose.yml`. PostgreSQL is external and reached through `DATABASE_URL`. Secrets come from `.env` at runtime through compose `env_file` and are never baked into the image; the image build uses `SKIP_ENV_VALIDATION=1`. Keep `.dockerignore` in sync when adding top-level files that the build doesn't need. Migrations are not run by the container.
+
 ## Database rules
 
-- **Never run `pnpm db:generate`, `db:migrate`, `db:push`, or `db:studio`.** The human runs all migration commands. After a schema change, tell them what to run (normally `pnpm db:generate` then `pnpm db:migrate`). Also flag anything destructive: a dropped or renamed column or table, a type change, or a new NOT NULL column on a table that has rows. drizzle-kit asks interactively about renames.
+- **Never run `pnpm db:generate`, `db:migrate`, `db:push`, or `db:studio`.** The human runs all migration commands.
+- **Whenever `src/server/db/schema.ts` changes, end your reply with a migration reminder.** It must:
+  1. Tell the user to run `pnpm db:generate`, then `pnpm db:migrate`.
+  2. Brief the change: list each table, column, index, constraint or relation that was added, changed or removed, with a short reason.
+  3. Flag anything destructive: a dropped or renamed column or table, a type change, or a new NOT NULL column on a table that has rows. drizzle-kit asks interactively about renames, so say which answer to pick.
 - Do not hand-edit anything in `drizzle/`. Those are generated SQL and snapshots, and committed migrations may already be applied.
 - Schema lives in `src/server/db/schema.ts`. Every table **must** be created with `createTable(...)`, which adds the `capella_` prefix. `drizzle.config.ts` has `tablesFilter: ["capella_*"]`, so drizzle-kit silently ignores any table without the prefix.
 - Keep the schema normalized (roughly 3NF):

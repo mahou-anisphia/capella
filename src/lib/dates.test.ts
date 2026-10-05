@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   addDays,
+  formatLong,
+  formatShort,
   fortnightOf,
   isValidISODate,
   todayInAppZone,
@@ -55,5 +57,12 @@ describe("isValidISODate", () => {
     expect(isValidISODate("2026-10-05")).toBe(true);
     expect(isValidISODate("2026-02-30")).toBe(false);
     expect(isValidISODate("2026-1-5")).toBe(false);
+  });
+});
+
+describe("formatShort / formatLong", () => {
+  it("formats independently of the runtime's ICU data", () => {
+    expect(formatShort("2026-09-14")).toBe("14 Sep");
+    expect(formatLong("2026-10-05")).toBe("Mon, 5 Oct 2026");
   });
 });

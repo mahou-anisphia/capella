@@ -5,6 +5,10 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  // Emits a self-contained `.next/standalone/server.js` with only the traced node_modules, which
+  // keeps the Docker runtime image small. See `Dockerfile`.
+  output: "standalone",
+};
 
 export default config;

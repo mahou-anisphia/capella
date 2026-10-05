@@ -1,0 +1,39 @@
+# Keep the build context small and the `COPY . .` layer stable: anything not needed by
+# `pnpm build` stays out, so touching it never busts the Docker cache.
+
+# Dependencies & build output (rebuilt inside the image)
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets — passed to the container at runtime by docker-compose, never baked into the image
+.env
+.env*.local
+!.env.example
+
+# VCS, editor and OS noise
+.git
+.gitignore
+.vscode
+.idea
+.claude
+.DS_Store
+*.log
+
+# Not needed to build the app
+drizzle
+**/*.test.ts
+vitest.config.ts
+*.md
+start-database.sh
+setup.sh
+teardown.sh
+
+# Docker files themselves (changing them shouldn't invalidate the source layer)
+Dockerfile
+.dockerignore
+docker-compose.yml
