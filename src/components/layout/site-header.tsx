@@ -1,6 +1,7 @@
 import { SparklesIcon } from "lucide-react";
 import Link from "next/link";
 
+import { InstallAppButton } from "~/components/pwa/install-app-button";
 import { ThemeToggle } from "~/components/theme/theme-toggle";
 
 export function SiteHeader() {
@@ -13,7 +14,10 @@ export function SiteHeader() {
         <SparklesIcon className="text-accent size-5" aria-hidden />
         Capella
       </Link>
-      <ThemeToggle />
+      <div className="flex items-center gap-1">
+        <InstallAppButton />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
