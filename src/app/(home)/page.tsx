@@ -1,7 +1,17 @@
-export default function HomePage() {
+import { Suspense } from "react";
+
+import { api, HydrateClient } from "~/trpc/server";
+import { HabitList } from "./_components/habit-list";
+import { HabitListSkeleton } from "./_components/habit-list-skeleton";
+
+export default async function HomePage() {
+  void api.habit.list.prefetch();
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
-      <h1 className="text-4xl font-bold tracking-tight">Sirius</h1>
-    </main>
+    <HydrateClient>
+      <Suspense fallback={<HabitListSkeleton />}>
+        <HabitList />
+      </Suspense>
+    </HydrateClient>
   );
 }

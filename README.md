@@ -1,4 +1,4 @@
-# Sirius
+# Capella
 
 Next.js (App Router) + tRPC + Drizzle (PostgreSQL) + Tailwind v4 + shadcn/ui, bootstrapped with [create-t3-app](https://create.t3.gg/).
 

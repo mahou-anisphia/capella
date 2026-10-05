@@ -1,4 +1,7 @@
+import { checkInRouter } from "~/server/api/routers/check-in";
+import { habitRouter } from "~/server/api/routers/habit";
 import { healthRouter } from "~/server/api/routers/health";
+import { periodRouter } from "~/server/api/routers/period";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -8,6 +11,9 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   health: healthRouter,
+  habit: habitRouter,
+  checkIn: checkInRouter,
+  period: periodRouter,
 });
 
 // export type definition of API

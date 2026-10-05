@@ -16,9 +16,10 @@ pnpm check          # next lint + tsc --noEmit — run before considering work d
 pnpm lint:fix
 pnpm format:write   # prettier (with tailwind class sorting)
 pnpm build
+pnpm test           # vitest run (src/**/*.test.ts)
 ```
 
-There is no test runner yet. If logic appears that is worth testing (pure functions, non-trivial procedures), add Vitest rather than a hand-rolled harness.
+Pure logic worth testing (date math, stats) gets a colocated `*.test.ts` run by Vitest.
 
 Env vars are validated at build/dev time by `src/env.js` (`@t3-oss/env-nextjs`). A new variable has to be added in three places: the zod schema, `runtimeEnv` in `src/env.js`, and `.env.example`. Import `env` from `~/env` and never read `process.env` directly. Set `SKIP_ENV_VALIDATION=1` to bypass validation.
 
@@ -26,14 +27,14 @@ Env vars are validated at build/dev time by `src/env.js` (`@t3-oss/env-nextjs`).
 
 - **Never run `pnpm db:generate`, `db:migrate`, `db:push`, or `db:studio`.** The human runs all migration commands. After a schema change, tell them what to run (normally `pnpm db:generate` then `pnpm db:migrate`). Also flag anything destructive: a dropped or renamed column or table, a type change, or a new NOT NULL column on a table that has rows. drizzle-kit asks interactively about renames.
 - Do not hand-edit anything in `drizzle/`. Those are generated SQL and snapshots, and committed migrations may already be applied.
-- Schema lives in `src/server/db/schema.ts`. Every table **must** be created with `createTable(...)`, which adds the `sirius_` prefix. `drizzle.config.ts` has `tablesFilter: ["sirius_*"]`, so drizzle-kit silently ignores any table without the prefix.
+- Schema lives in `src/server/db/schema.ts`. Every table **must** be created with `createTable(...)`, which adds the `capella_` prefix. `drizzle.config.ts` has `tablesFilter: ["capella_*"]`, so drizzle-kit silently ignores any table without the prefix.
 - Keep the schema normalized (roughly 3NF):
   - Many-to-many relations go in junction tables, not arrays or JSON.
   - Don't store derived or duplicated data unless there is a stated reason.
   - Foreign keys need an explicit `onDelete` and an index. Postgres does not index FK columns automatically.
   - Use `timestamp({ withTimezone: true })`, with `createdAt` (not null, defaulted) and `updatedAt` (`$onUpdate`).
   - Define `relations()` for anything that will be read through `db.query.*`.
-- Index and constraint names are schema-global in Postgres, so prefix them with the table name (e.g. `sirius_note_owner_idx`).
+- Index and constraint names are schema-global in Postgres, so prefix them with the table name (e.g. `capella_note_owner_idx`).
 - ESLint (`eslint-plugin-drizzle`) errors on `db.delete`/`db.update` without `.where()`.
 
 ## Architecture
@@ -48,6 +49,15 @@ Env vars are validated at build/dev time by `src/env.js` (`@t3-oss/env-nextjs`).
 - **Types:** `RouterInputs`/`RouterOutputs` from `~/trpc/react` give inferred types. Don't redeclare API shapes by hand.
 
 **Validation:** use zod (v3) for procedure inputs. Reuse those schemas on the client for forms instead of duplicating rules.
+
+## Domain
+
+Habit check-in tracker; see the decided rules in the design notes. Key invariants:
+
+- Calendar dates are `YYYY-MM-DD` strings end to end (`date({ mode: "string" })`). Use `~/lib/dates`, never `new Date("YYYY-MM-DD")`.
+- "Today" is computed in `Asia/Ho_Chi_Minh` via `todayInAppZone()`, never in server-local time or UTC.
+- Progress, streaks and stats are derived in `~/lib/habit-stats.ts` (pure, tested). Don't persist derived numbers.
+- No in-app auth: the app sits behind Authelia (reverse proxy), so procedures are `publicProcedure`.
 
 ## Folder conventions
 
@@ -65,4 +75,4 @@ Env vars are validated at build/dev time by `src/env.js` (`@t3-oss/env-nextjs`).
 - shadcn is configured in `components.json` with style **`base-nova`**. Its components are built on **Base UI (`@base-ui/react`), not Radix**, so follow Base UI APIs (e.g. `render` prop, not `asChild`). Add components with `pnpm dlx shadcn@latest add <name>`.
 - `cn()` comes from the `cn` package, shadcn's drop-in for clsx + tailwind-merge, and is re-exported from `~/lib/utils`.
 - Icons come from `lucide-react`.
-- Theme tokens (oklch CSS variables, `.dark` variant) live in `src/styles/globals.css`. Use semantic classes (`bg-background`, `text-muted-foreground`, etc.) rather than raw colors.
+- Theme tokens (oklch CSS variables, March 7th palette) live in `src/styles/globals.css`. Dark mode is `[data-theme="dark"]` on `<html>`, set by `next-themes`; the `dark:` variant targets it. Panels are `bg-card rounded-xl ring-1 ring-border shadow-surface`; keep saturated pink for primary actions and progress only. Fonts: Nunito (`font-sans`) for body, Quicksand (`font-heading`) for headings and big numbers. Use semantic classes (`bg-background`, `text-muted-foreground`, etc.) rather than raw colors.
