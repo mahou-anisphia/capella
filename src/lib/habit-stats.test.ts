@@ -109,6 +109,19 @@ describe("computeHabitStats", () => {
     expect(s.periods.every((p) => p.target === 4)).toBe(true);
   });
 
+  it("counts distinct checked days against days since start", () => {
+    const s = stats({
+      checkIns: [
+        ...days("2026-08-31", 3),
+        { date: "2026-08-31", backfilled: true },
+        { date: "2026-08-30", backfilled: true },
+      ],
+    });
+    expect(s.checkedDays).toBe(3);
+    expect(s.daysSinceStart).toBe(36);
+    expect(stats({ startDate: "2026-10-10" }).daysSinceStart).toBe(0);
+  });
+
   it("ignores check-ins before the start date or after today", () => {
     const s = stats({
       checkIns: [

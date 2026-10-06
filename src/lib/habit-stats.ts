@@ -71,6 +71,10 @@ export interface HabitStats {
   bestPeriod: PeriodResult | null;
   /** Monday-first check-in counts. */
   weekdayCounts: number[];
+  /** Distinct days checked in, from `startDate` through today. */
+  checkedDays: number;
+  /** Calendar days from `startDate` through today (0 if it starts later). */
+  daysSinceStart: number;
   liveCount: number;
   backfilledCount: number;
 }
@@ -183,6 +187,8 @@ export function computeHabitStats(input: StatsInput): HabitStats {
     averagePerPeriod,
     bestPeriod,
     weekdayCounts,
+    checkedDays: uniqueDates.size,
+    daysSinceStart: Math.max(0, daysBetweenInclusive(startDate, today)),
     liveCount: inRange.length - backfilledCount,
     backfilledCount,
   };

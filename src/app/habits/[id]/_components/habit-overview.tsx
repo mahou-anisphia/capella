@@ -17,6 +17,12 @@ export function HabitOverview({ id }: { id: number }) {
   return (
     <div className="flex flex-col gap-4">
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatTile
+          className="col-span-2 sm:col-span-3"
+          label={`Days checked in since ${formatShort(habit.startDate)}`}
+          value={s.checkedDays}
+          caption={`of ${plural(s.daysSinceStart, "day")}`}
+        />
         <StatTile label="Fortnights in a row" value={s.streak} />
         <StatTile label="Best run" value={s.bestStreak} />
         <StatTile
